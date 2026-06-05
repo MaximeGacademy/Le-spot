@@ -2,6 +2,26 @@
 
 > Document **formateur uniquement**. Ne pas distribuer aux étudiants : il révèle l'emplacement des failles plantées volontairement (matière pour J5-J6).
 
+## Déroulé & minutage (~11 h 35 + pauses ≈ 2 jours)
+
+Plan complet : `cours/J3.md`. Cours animable : Notion « J3 J4 - Sous le capot ». 13 chapitres, à doser selon le groupe — **ne pas figer la frontière J3/J4** (cf. demande client : « difficile de prévoir 2 journées »).
+
+- **Colonne vertébrale = chapitre 2** (« où tourne le code »). Tout s'y rattache. Si le temps manque, sacrifiez de la profondeur ailleurs, jamais le chapitre 2.
+- Doctrine de charge : la frontière serveur/client = à **maîtriser** ; le reste (TS, Tailwind, shadcn, App Router) = « assez pour **reconnaître** », pas mémoriser.
+- Rythme cible : chaque chapitre finit par un **geste** (prédire / casser / modifier). L'après-midi de la 1re journée est le moment de décrochage le plus risqué → y mettre les exercices les plus actifs (chap. 4-5-7).
+
+## Pièges fréquents (anticiper)
+
+- **Chapitre 1, la demi-heure qui s'évapore** : la connexion Supabase. Préparez un `.env.local` de secours et un projet Supabase « modèle » déjà migré pour débloquer un étudiant coincé. Erreurs classiques : clé anon tronquée, fichier `.env` au lieu de `.env.local`, oubli de relancer `npm run dev`.
+- **Confirmation d'email** : par défaut un signup peut exiger une confirmation → l'étudiant « ne se connecte pas ». Faire **désactiver** « Confirm email » (Authentication → Sign In/Providers → Email) en début de chapitre 1.
+- **`params`/`searchParams` = Promise** (Next 16) : si un étudiant copie un vieux snippet sans `await`, ça casse. C'est un bon moment pour rappeler que l'IA a une mémoire périmée.
+
+## À démontrer EN LIVE (projeté)
+
+1. **Chapitre 2** : DevTools → Réseau → la clé anon part au navigateur (frontière des secrets, prépare J5-J6).
+2. **Chapitre 8** : réserver un créneau et voir le planning se rafraîchir (Server Action + `revalidatePath`).
+3. **Chapitre 12** : dérouler les 4 cas ❌→✅ (`cours/exemples-juger-ia/`).
+
 ## Où vivent les choses (carte rapide)
 
 - Lecture des données (Server Components) : `src/app/page.tsx`, `src/app/mes-reservations/page.tsx`, `src/app/admin/page.tsx`, `src/app/terrains/[id]/page.tsx`.

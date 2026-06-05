@@ -59,10 +59,17 @@
 
 ## Démo "prouver les failles" (script rapide)
 
-À faire une fois la base branchée et les comptes démo créés (voir README) :
+> ✅ **Confirmé le 2026-06-05** sur le projet de démo (`ijwhsgjsmbsbctsuyiag`), avec la seule clé **anon**, via l'API REST `…/rest/v1/…` (= ce qu'un navigateur peut faire). Les 5 failles sont réelles.
 
-1. Double-booking : réserver 2× le même créneau → 2 lignes en base.
-2. RLS off : avec la clé anon (console navigateur), `select * from bookings` renvoie tout.
-3. Annulation croisée : client A annule une résa de B via son `id`.
-4. Action admin : depuis un compte client, appeler `deleteCourt` → terrain supprimé.
-5. Validation : créer une résa avec une `date` passée → acceptée.
+1. **Double-booking** : 2× POST sur `bookings` avec le même `(court_id, date, start_hour)` → 2 lignes créées. *(Confirmé.)*
+2. **RLS off (lecture)** : `GET /rest/v1/bookings` en anon → renvoie **toutes** les réservations de tous les comptes. *(Confirmé.)*
+3. **Annulation croisée** : `PATCH /rest/v1/bookings?id=eq.1 {"status":"annulee"}` en anon → passe, sans être propriétaire. *(Confirmé.)*
+4. **Action admin non gardée** : `POST /rest/v1/courts` en anon (aucun rôle) → terrain créé. *(Confirmé.)*
+5. **Validation absente** : `POST /rest/v1/bookings` avec `date` = 2020-01-01 → accepté. *(Confirmé.)* En revanche `start_hour = 3` est rejeté par le **CHECK** DB → bon exemple des **deux niveaux** de défense (appli vs base).
+
+Variante "depuis l'app" (à montrer en cours) : ouvrir le DevTools → onglet Réseau pendant une réservation pour voir partir l'appel ; lire la clé anon dans le bundle ; appeler une Server Action sans le rôle attendu.
+
+### Comptes de démo (projet de cours)
+
+- `client@lespot.test` / `motdepasse` (rôle `client`)
+- `admin@lespot.test` / `motdepasse` (rôle `admin`)

@@ -29,7 +29,10 @@ export default function RootLayout({
       lang="fr"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="bg-background text-foreground min-h-full flex flex-col">
+      <body
+        className="bg-background text-foreground min-h-full flex flex-col"
+        suppressHydrationWarning
+      >
         <SiteNav />
         <main className="flex-1">{children}</main>
         <Toaster richColors position="top-center" />

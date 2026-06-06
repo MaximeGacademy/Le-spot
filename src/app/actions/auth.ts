@@ -35,7 +35,7 @@ export async function signUp(
   const fullName = String(formData.get("full_name") ?? "");
 
   const supabase = await createClient();
-  const { error } = await supabase.auth.signUp({
+  const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: { data: { full_name: fullName } },
@@ -43,6 +43,17 @@ export async function signUp(
 
   if (error) {
     return { error: error.message };
+  }
+
+  // Si la confirmation d'email est activée, aucune session n'est créée :
+  // l'utilisateur croirait que « ça ne marche pas ». On l'explique clairement.
+  if (!data.session) {
+    return {
+      error:
+        "Compte créé, mais la confirmation d'email est activée sur Supabase. " +
+        "Désactive-la (Authentication → Sign In/Providers → Email → « Confirm email ») " +
+        "puis connecte-toi.",
+    };
   }
 
   revalidatePath("/", "layout");

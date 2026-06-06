@@ -4,7 +4,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { signOut } from "@/app/actions/auth";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 
 export async function SiteNav() {
   const supabase = await createClient();
@@ -63,9 +63,9 @@ export async function SiteNav() {
               </form>
             </>
           ) : (
-            <Button render={<Link href="/login" />} size="sm">
+            <Link href="/login" className={buttonVariants({ size: "sm" })}>
               Se connecter
-            </Button>
+            </Link>
           )}
         </div>
       </nav>

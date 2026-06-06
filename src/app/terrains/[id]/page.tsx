@@ -4,7 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { Court } from "@/lib/types";
 
@@ -50,7 +50,9 @@ export default async function CourtDetailPage({
             {c.description ?? "Pas de description."}
           </p>
           <div className="mt-6">
-            <Button render={<Link href="/" />}>Voir les créneaux du jour</Button>
+            <Link href="/" className={buttonVariants()}>
+              Voir les créneaux du jour
+            </Link>
           </div>
         </CardContent>
       </Card>

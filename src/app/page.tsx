@@ -1,3 +1,5 @@
+console.log("PLANNING : où est-ce que je m'affiche ?");
+
 // Vue du jour (planning) · PUBLIQUE.
 // C'est un Server Component : il interroge Supabase DIRECTEMENT, côté serveur.
 // L'état (jour affiché, filtres) vit dans les SEARCH PARAMS de l'URL.
@@ -41,7 +43,7 @@ export default async function PlanningPage({
     .from("courts")
     .select("*")
     .eq("is_active", true)
-    .order("name");
+    .order("name", { ascending: false });
 
   if (type) courtsQuery = courtsQuery.eq("type", type);
   if (format) courtsQuery = courtsQuery.eq("format", format);
@@ -53,11 +55,11 @@ export default async function PlanningPage({
   const courtIds = courtList.map((c) => c.id);
   const { data: bookings } = courtIds.length
     ? await supabase
-        .from("bookings")
-        .select("id, court_id, start_hour, user_id, status")
-        .eq("date", date)
-        .eq("status", "confirmee")
-        .in("court_id", courtIds)
+      .from("bookings")
+      .select("id, court_id, start_hour, user_id, status")
+      .eq("date", date)
+      .eq("status", "confirmee")
+      .in("court_id", courtIds)
     : { data: [] };
 
   // 3) On rattache à chaque terrain ses réservations du jour.

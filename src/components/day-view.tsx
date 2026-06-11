@@ -38,7 +38,7 @@ export function DayView({
               <div className="flex flex-wrap items-center gap-2">
                 <CardTitle>
                   <Link href={`/terrains/${court.id}`} className="hover:underline">
-                    {court.name}
+                    {court.nme}
                   </Link>
                 </CardTitle>
                 <Badge variant="secondary">{TYPE_LABEL[court.type]}</Badge>

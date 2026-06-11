@@ -1,4 +1,5 @@
 "use client";
+console.log("SLOT BUTTON : où est-ce que je m'affiche ?");
 
 // Un créneau LIBRE. C'est un composant CLIENT (interactivité = clic + modale).
 // - Visiteur non connecté  → le clic envoie vers /login (la "porte d'auth").

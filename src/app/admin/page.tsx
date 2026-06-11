@@ -1,7 +1,17 @@
-// Espace ADMIN · CRUD des terrains.
-// Server Component : on lit la session + le rôle côté serveur, et on masque la page
-// aux non-admins. ⚠️ MAIS les Server Actions (createCourt/updateCourt/deleteCourt)
-// ne revérifient PAS le rôle : c'est une faille assumée (voir notes-formateur.md).
+// =============================================================================
+// src/app/admin/page.tsx — Espace admin · CRUD des terrains
+// =============================================================================
+//
+// Server Component : on lit la session + le rôle côté serveur.
+// Deux niveaux de contrôle d'accès :
+//   1. Non connecté → redirection vers /login
+//   2. Connecté mais rôle ≠ "admin" → message "accès réservé" (pas de redirect)
+//
+// ⚠️ FAILLE INTENTIONNELLE : le lien "Admin" dans la nav est masqué pour les
+//    non-admins, mais les Server Actions (createCourt, updateCourt, deleteCourt)
+//    ne revérifient PAS le rôle. N'importe qui qui connaît ces actions peut
+//    les appeler directement. Cette faille sera corrigée en J5-J6.
+
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createCourt, updateCourt, deleteCourt } from "@/app/actions/courts";
@@ -16,12 +26,15 @@ import {
 } from "@/components/ui/card";
 import type { Court } from "@/lib/types";
 
+// Classes CSS communes pour les <select> natifs (shadcn ne fournit pas de
+// composant Select compatible avec les Server Actions, on utilise donc le HTML natif).
 const selectClass =
   "h-9 rounded-md border border-input bg-transparent px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring";
 
 export default async function AdminPage() {
   const supabase = await createClient();
 
+  // ── Vérification d'accès ─────────────────────────────────────────────────
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -30,12 +43,16 @@ export default async function AdminPage() {
     redirect("/login");
   }
 
+  // .single() : on attend exactement une ligne (le profil de l'utilisateur).
+  // Si aucune ligne n'existe, Supabase renvoie une erreur (non gérée ici).
   const { data: profile } = await supabase
     .from("profiles")
     .select("role")
     .eq("id", user.id)
     .single();
 
+  // Si l'utilisateur n'est pas admin, on affiche un message et on s'arrête.
+  // On utilise return dans un Server Component pour court-circuiter le rendu.
   if (profile?.role !== "admin") {
     return (
       <div className="mx-auto max-w-3xl px-4 py-16 text-center">
@@ -47,10 +64,11 @@ export default async function AdminPage() {
     );
   }
 
+  // ── Chargement des terrains ──────────────────────────────────────────────
   const { data: courts } = await supabase
     .from("courts")
     .select("*")
-    .order("id");
+    .order("id"); // on trie par id pour un ordre stable
   const courtList = (courts ?? []) as Court[];
 
   return (
@@ -60,7 +78,8 @@ export default async function AdminPage() {
         Ajoute, modifie ou supprime des terrains.
       </p>
 
-      {/* --- Créer un terrain --- */}
+      {/* ── Formulaire de création ─────────────────────────────────────── */}
+      {/* action={createCourt} : à la soumission, Next.js appelle la Server Action */}
       <Card className="mt-6">
         <CardHeader>
           <CardTitle>Ajouter un terrain</CardTitle>
@@ -73,6 +92,7 @@ export default async function AdminPage() {
             </div>
             <div className="flex flex-col gap-2">
               <Label htmlFor="new-type">Type</Label>
+              {/* defaultValue = valeur initiale (non contrôlée par React) */}
               <select id="new-type" name="type" className={selectClass} defaultValue="indoor">
                 <option value="indoor">Intérieur</option>
                 <option value="outdoor">Extérieur</option>
@@ -100,19 +120,25 @@ export default async function AdminPage() {
         </CardContent>
       </Card>
 
-      {/* --- Liste + édition inline --- */}
+      {/* ── Liste des terrains existants avec édition inline ──────────── */}
       <h2 className="mt-10 text-lg font-semibold">Terrains existants</h2>
       <div className="mt-4 flex flex-col gap-4">
+        {/* Un formulaire par terrain : chaque form envoie les données de son terrain */}
         {courtList.map((court) => (
           <Card key={court.id}>
             <CardContent>
+              {/* Formulaire de mise à jour */}
               <form
                 action={updateCourt}
                 className="grid items-end gap-4 sm:grid-cols-2"
               >
+                {/* Champ caché : l'id du terrain est envoyé au serveur sans être
+                    visible dans l'interface. La Server Action lit formData.get("id"). */}
                 <input type="hidden" name="id" value={court.id} />
+
                 <div className="flex flex-col gap-2 sm:col-span-2">
                   <Label htmlFor={`name-${court.id}`}>Nom</Label>
+                  {/* defaultValue pré-remplit le champ avec la valeur actuelle */}
                   <Input id={`name-${court.id}`} name="name" defaultValue={court.name} required />
                 </div>
                 <div className="flex flex-col gap-2">
@@ -141,6 +167,7 @@ export default async function AdminPage() {
                 </div>
                 <div className="flex flex-col gap-2 sm:col-span-2">
                   <Label htmlFor={`description-${court.id}`}>Description</Label>
+                  {/* ?? "" : si description est null, on affiche une chaîne vide */}
                   <Input
                     id={`description-${court.id}`}
                     name="description"
@@ -162,6 +189,7 @@ export default async function AdminPage() {
                 </div>
               </form>
 
+              {/* Formulaire de suppression séparé (bouton rouge) */}
               <form action={deleteCourt} className="mt-3 border-t pt-3">
                 <input type="hidden" name="id" value={court.id} />
                 <Button type="submit" variant="destructive" size="sm">

@@ -28,6 +28,7 @@ type SearchParams = {
   date?: string;
   type?: string;
   format?: string;
+  maxPrice?: string;
 };
 
 // La fonction est async car on fait des appels réseau (await supabase...).
@@ -56,6 +57,11 @@ export default async function PlanningPage({
       ? params.format
       : undefined;
 
+      const maxPrice =
+  params.maxPrice && Number.isInteger(Number(params.maxPrice))
+    ? Number(params.maxPrice)
+    : undefined;
+
   // On crée le client Supabase SERVEUR (lit les cookies de session).
   const supabase = await createClient();
 
@@ -76,6 +82,7 @@ export default async function PlanningPage({
   // On applique les filtres seulement s'ils sont présents dans l'URL.
   if (type) courtsQuery = courtsQuery.eq("type", type);
   if (format) courtsQuery = courtsQuery.eq("format", format);
+  if (maxPrice) courtsQuery = courtsQuery.lte("hourly_price", maxPrice)
 
   const { data: courts } = await courtsQuery;
   // "as Court[]" : on dit à TypeScript quelle forme ont ces données.
@@ -125,7 +132,7 @@ export default async function PlanningPage({
           format={format as CourtFormat | undefined}
         />
         {/* Filters est "use client" : il écoute les onChange des selects */}
-        <Filters date={date} type={type} format={format} />
+        <Filters date={date} type={type} format={format} maxPrice={params.maxPrice} />
       </div>
 
       <div className="mt-6">

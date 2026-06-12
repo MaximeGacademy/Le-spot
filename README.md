@@ -131,3 +131,4 @@ npm run lint    # ESLint
 ---
 
 > Le dossier `cours/` et le fichier `CLAUDE.md` sont des **contenus formateur** : ils ne font pas partie de ce que reçoivent les étudiants (à retirer avant distribution).
+# Le-spot

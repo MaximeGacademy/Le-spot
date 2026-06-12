@@ -19,9 +19,26 @@ import { NextResponse, type NextRequest } from "next/server";
 // disponibles dans le proxy Next.js (qui tourne dans un environnement léger).
 
 export async function updateSession(request: NextRequest) {
-  // On crée une réponse "passe-plat" : on laisse la requête continuer
-  // vers la page, mais on pourra modifier ses headers/cookies avant.
-  let supabaseResponse = NextResponse.next({ request });
+  // En environnement proxifié (GitHub Codespaces, reverse proxy), le header
+  // `host` vu par Next.js peut différer de l'`origin` envoyé par le navigateur.
+  // Next.js compare les deux pour protéger les Server Actions contre le CSRF :
+  // si elles diffèrent et que l'origin n'est pas dans `allowedOrigins`, la
+  // requête est rejetée avec « Invalid Server Actions request ».
+  //
+  // Solution : on s'assure que `x-forwarded-host` correspond à l'origin, ce
+  // qui fait passer le contrôle CSRF sans désactiver la protection.
+  const requestHeaders = new Headers(request.headers);
+  const origin = requestHeaders.get("origin");
+  if (origin) {
+    try {
+      requestHeaders.set("x-forwarded-host", new URL(origin).host);
+    } catch {
+      // origin malformé — on laisse les headers intacts
+    }
+  }
+
+  // On crée une réponse "passe-plat" avec les headers corrigés.
+  let supabaseResponse = NextResponse.next({ request: { headers: requestHeaders } });
 
   // On crée un client Supabase spécial qui lit les cookies de la REQUÊTE
   // et écrit les nouveaux cookies dans la RÉPONSE.
@@ -38,8 +55,8 @@ export async function updateSession(request: NextRequest) {
           cookiesToSet.forEach(({ name, value }) =>
             request.cookies.set(name, value),
           );
-          // Puis on recrée la réponse avec les nouveaux cookies
-          supabaseResponse = NextResponse.next({ request });
+          // Puis on recrée la réponse avec les headers corrigés (x-forwarded-host)
+          supabaseResponse = NextResponse.next({ request: { headers: requestHeaders } });
           // Et on les ajoute dans les headers de la réponse envoyée au navigateur
           cookiesToSet.forEach(({ name, value, options }) =>
             supabaseResponse.cookies.set(name, value, options),

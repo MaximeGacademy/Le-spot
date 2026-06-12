@@ -63,6 +63,7 @@ export function DayView({
                 {/* TYPE_LABEL[court.type] → ex. "Intérieur" pour "indoor" */}
                 <Badge variant="secondary">{TYPE_LABEL[court.type]}</Badge>
                 <Badge variant="outline">{FORMAT_LABEL[court.format]}</Badge>
+                <Badge variant="outline">{court.hourly_price} €/h</Badge>
               </div>
             </CardHeader>
             <CardContent>

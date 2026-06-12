@@ -43,6 +43,7 @@ export type Court = {
   description: string | null;  // null si aucune description saisie
   is_active: boolean;
   created_at: string;   // Supabase renvoie les dates sous forme de chaîne ISO
+  hourly_price: number; 
 };
 
 export type Booking = {

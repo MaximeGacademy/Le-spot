@@ -39,6 +39,7 @@ export default async function PlanningPage({
   // de lire ses valeurs. C'est un changement par rapport aux versions précédentes.
   searchParams: Promise<SearchParams>;
 }) {
+  
   // On attend les paramètres de l'URL
   const params = await searchParams;
 

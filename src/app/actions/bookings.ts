@@ -14,6 +14,8 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { requireUser } from "@/lib/auth-guards";
+import { bookingSchema } from "@/lib/schemas";
 
 // BookingResult — ce que renvoie createBooking.
 // ok: true  = réservation créée
@@ -21,48 +23,35 @@ import { createClient } from "@/lib/supabase/server";
 export type BookingResult = { ok: boolean; error: string | null };
 
 // createBooking — crée une réservation pour l'utilisateur connecté.
-//
-// ⚠️ VERSION NAÏVE INTENTIONNELLE :
-//   1. Aucune vérification de date passée ou d'heure hors-plage.
-//   2. Aucune garde anti double-booking : deux réservations sur le même
-//      créneau (court_id + date + start_hour) seront acceptées.
-// Ces failles seront corrigées en J5-J6.
+// Valide les données via bookingSchema (date non passée, heure entre 9h et 21h)
+// avant tout accès à la base.
 export async function createBooking(
   _prevState: BookingResult,
   formData: FormData,
 ): Promise<BookingResult> {
-  const supabase = await createClient();
+  const user = await requireUser();
 
-  // On récupère l'utilisateur connecté depuis la session (cookie).
-  // Si personne n'est connecté, user sera null.
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    // L'action retourne une erreur — le composant l'affichera via toast.
-    return { ok: false, error: "Tu dois être connecté pour réserver." };
+  const parsed = bookingSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) {
+    return { ok: false, error: "Données de réservation invalides." };
   }
 
-  // Number() convertit la chaîne du champ caché en nombre entier.
-  // formData.get("court_id") renvoie toujours une chaîne (ou null).
-  const court_id = Number(formData.get("court_id"));
-  const date = String(formData.get("date"));
-  const start_hour = Number(formData.get("start_hour"));
+  const { court_id, date, start_hour } = parsed.data;
 
-  // INSERT dans Supabase — équivalent de l'opération "Créer un enregistrement"
-  // dans Airtable ou Make.
-  // user_id est rempli côté serveur (pas depuis le formulaire) pour éviter
-  // qu'un utilisateur puisse créer une réservation au nom de quelqu'un d'autre.
+  const supabase = await createClient();
+
+  // INSERT dans Supabase — user_id vient de la session, pas du formulaire.
   const { error } = await supabase.from("bookings").insert({
     court_id,
-    user_id: user.id, // on fait confiance à la session, pas au formulaire
+    user_id: user.id,
     date,
     start_hour,
-    // status = "confirmee" par défaut (valeur par défaut dans la base)
   });
 
   if (error) {
+    if (error.code === "23505") {
+      return { ok: false, error: "Ce créneau vient d'être réservé." };
+    }
     return { ok: false, error: error.message };
   }
 
@@ -74,19 +63,20 @@ export async function createBooking(
 }
 
 // cancelBooking — annule une réservation (passe son status à "annulee").
-//
-// ⚠️ VERSION NAÏVE INTENTIONNELLE :
-//   On ne vérifie PAS que la réservation appartient à l'utilisateur courant.
-//   N'importe quel compte connecté peut annuler n'importe quelle réservation
-//   en envoyant l'id correct. Faille à corriger en J5-J6.
+// Le double .eq() garantit qu'un utilisateur ne peut annuler que ses propres réservations.
 export async function cancelBooking(formData: FormData): Promise<void> {
+  const user = await requireUser();
   const supabase = await createClient();
 
   const id = Number(formData.get("id"));
 
   // UPDATE — on change le status au lieu de supprimer la ligne.
-  // Cela garde un historique des réservations annulées.
-  await supabase.from("bookings").update({ status: "annulee" }).eq("id", id);
+  // .eq("user_id", user.id) garantit qu'on ne peut annuler que ses propres réservations.
+  await supabase
+    .from("bookings")
+    .update({ status: "annulee" })
+    .eq("id", id)
+    .eq("user_id", user.id);
 
   revalidatePath("/");
   revalidatePath("/mes-reservations");

@@ -18,9 +18,11 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { requireAdmin } from "@/lib/auth-guards";
 
 // createCourt — ajoute un nouveau terrain
 export async function createCourt(formData: FormData): Promise<void> {
+  await requireAdmin();
   const supabase = await createClient();
 
   // formData.get() renvoie une chaîne pour les <input> et <select>,
@@ -45,6 +47,7 @@ export async function createCourt(formData: FormData): Promise<void> {
 
 // updateCourt — modifie un terrain existant
 export async function updateCourt(formData: FormData): Promise<void> {
+  await requireAdmin();
   const supabase = await createClient();
 
   // L'id vient d'un champ caché <input type="hidden" name="id" value={court.id} />
@@ -70,6 +73,7 @@ export async function updateCourt(formData: FormData): Promise<void> {
 // La suppression est en CASCADE dans la base (voir migration SQL) :
 // supprimer un terrain supprime aussi toutes ses réservations associées.
 export async function deleteCourt(formData: FormData): Promise<void> {
+  await requireAdmin();
   const supabase = await createClient();
 
   const id = Number(formData.get("id"));

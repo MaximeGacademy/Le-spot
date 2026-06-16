@@ -22,8 +22,8 @@ test.afterAll(async ({ request }) => {
 test("réservation de bout en bout", async ({ page }) => {
   // 1) Connexion (compte client de démo)
   await page.goto("/login");
-  await page.fill("#email", "client@lespot.test");
-  await page.fill("#password", "motdepasse");
+  await page.fill("#email", "maxime.gadenne+client2@alegria.academy");
+  await page.fill("#password", "alegria");
   await page.getByRole("button", { name: "Se connecter" }).click();
 
   // 2) On arrive sur le planning

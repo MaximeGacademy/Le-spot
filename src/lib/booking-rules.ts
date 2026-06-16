@@ -10,8 +10,8 @@ export function creneauxSeChevauchent(
   const finA = debutA + dureeA / 60;
   const finB = debutB + dureeB / 60;
 
-  const aCommenceAvantFinB = debutA < finB;
-  const bCommenceAvantFinA = debutB < finA;
+  const aCommenceAvantFinB = debutA <= finB;
+  const bCommenceAvantFinA = debutB <= finA;
 
   return aCommenceAvantFinB && bCommenceAvantFinA;
 }

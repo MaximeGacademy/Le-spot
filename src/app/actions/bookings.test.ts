@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import type { User } from "@supabase/supabase-js";
 
 vi.mock("next/cache", () => ({
   revalidatePath: vi.fn(),
@@ -31,7 +32,7 @@ function validFormData(): FormData {
 function mockSupabaseInsert(error: { code?: string; message?: string } | null) {
   const insert = vi.fn().mockResolvedValue({ error });
   const from = vi.fn().mockReturnValue({ insert });
-  vi.mocked(createClient).mockResolvedValue({ from } as any);
+  vi.mocked(createClient).mockResolvedValue({ from } as unknown as Awaited<ReturnType<typeof createClient>>);
   return { insert, from };
 }
 
@@ -49,7 +50,7 @@ describe("createBooking", () => {
   });
 
   it("retourne une erreur si les données du formulaire sont invalides", async () => {
-    vi.mocked(requireUser).mockResolvedValue(MOCK_USER as any);
+    vi.mocked(requireUser).mockResolvedValue(MOCK_USER as unknown as User);
 
     const fd = new FormData();
     fd.set("court_id", "0"); // invalide : doit être > 0
@@ -62,7 +63,7 @@ describe("createBooking", () => {
   });
 
   it("retourne ok:true, insère avec le bon user_id et invalide le cache", async () => {
-    vi.mocked(requireUser).mockResolvedValue(MOCK_USER as any);
+    vi.mocked(requireUser).mockResolvedValue(MOCK_USER as unknown as User);
     const { insert } = mockSupabaseInsert(null);
 
     const result = await createBooking(PREV_STATE, validFormData());
